@@ -1,0 +1,12 @@
+{
+  "name": "georender-clip",
+  "version": "1.0.0",
+  "bin": {
+    "georender-clip": "cmd.js"
+  },
+  "dependencies": {
+    "icosphere": "^1.0.0",
+    "minimist": "^1.2.5",
+    "varint": "^6.0.0"
+  }
+}
