@@ -22,7 +22,7 @@ var infile = argv.infile ?? argv._[0] ?? '-'
 var instream = infile === '-'
   ? process.stdin
   : fs.createReadStream(infile)
-var outstream = argv.infile === '-'
+var outstream = argv.outfile === '-'
   ? process.stdout
   : fs.createWriteStream(argv.outfile)
 

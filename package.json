@@ -5,6 +5,7 @@
     "georender-clip": "cmd.js"
   },
   "dependencies": {
+    "earcut": "^2.2.3",
     "icosphere": "^1.0.0",
     "length-prefixed-stream": "^2.0.0",
     "minimist": "^1.2.5",
