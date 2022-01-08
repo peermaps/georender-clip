@@ -57,3 +57,13 @@ All `opts` are passed to [pclip][]. Consult [pclip][] documentation for more inf
 
 [pclip]: https://github.com/substack/pclip
 
+# install
+
+```
+npm install georender-clip
+```
+
+# license
+
+bsd
+

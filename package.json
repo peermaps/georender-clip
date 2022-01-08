@@ -1,6 +1,7 @@
 {
   "name": "georender-clip",
   "version": "1.0.0",
+  "description": "polygon clipping tool for georender data",
   "bin": {
     "georender-clip": "cmd.js"
   },
@@ -9,6 +10,7 @@
     "icosphere": "^1.0.0",
     "length-prefixed-stream": "^2.0.0",
     "minimist": "^1.2.5",
+    "pclip": "^1.4.4",
     "pump": "^3.0.0",
     "pumpify": "^2.0.1",
     "split2": "^4.1.0",
@@ -17,5 +19,6 @@
   },
   "devDependencies": {
     "tape": "^5.4.0"
-  }
+  },
+  "license": "bsd"
 }
