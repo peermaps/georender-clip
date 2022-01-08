@@ -7,7 +7,12 @@ var getEdges = require('./lib/get-edges.js')
 var meshToCoords = require('./lib/mesh-to-coords.js')
 var empty = Buffer.alloc(0)
 
-exports.divide = function divide(buf, grid) {
+module.exports = function clip(mode, A, B) {
+  var flip = !Buffer.isBuffer(A) && Buffer.isBuffer(B)
+  var buf = flip ? B : A
+  if (flip) {
+    B = A
+  }
   if (buf[0] === 0x01) return buf
   if (buf[0] === 0x02) {
     var line = parse(buf)
@@ -19,7 +24,7 @@ exports.divide = function divide(buf, grid) {
     var cs = meshToCoords(mesh)
     if (cs.length === 0) return empty
     var opts = Object.assign({ get: (nodes,i) => nodes[i], }, geo)
-    var divided = pclip.divide(cs, grid, opts)
+    var divided = pclip.divide(cs, B, opts)
     var edges = [], positions = [], holes = []
     for (var i = 0; i < divided.length; i++) {
       for (var j = 0; j < divided[i].length; j++) {

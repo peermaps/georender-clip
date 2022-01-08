@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 var fs = require('fs')
+var path = require('path')
 var through = require('through2')
 var split = require('split2')
 var pump = require('pump')
@@ -10,8 +11,8 @@ var minimist = require('minimist')
 var argv = minimist(process.argv.slice(2), {
   alias: {
     f: 'format',
-    'if': ['in-format','inFormat'],
-    of: ['out-format','outFormat'],
+    'if': ['in-format','informat','inFormat'],
+    of: ['out-format','outformat','outFormat'],
     i: 'infile',
     o: 'outfile',
   },
@@ -19,6 +20,7 @@ var argv = minimist(process.argv.slice(2), {
 })
 
 var infile = argv.infile ?? argv._[0] ?? '-'
+
 var instream = infile === '-'
   ? process.stdin
   : fs.createReadStream(infile)
@@ -48,11 +50,45 @@ if (ofmt === 'base64' || ofmt === 'hex') {
   ofstream = lp.encode()
 }
 
+var mode
+if (argv.union) {
+  mode = 'union'
+} else if (argv.difference) {
+  mode = 'difference'
+} else if (argv.intersect) {
+  mode = 'intersect'
+} else if (argv.exclude) {
+  mode = 'exclude'
+} else if (argv.divide) {
+  mode = 'divide'
+} else {
+  return exit('no clipping method provided')
+}
 var clip = require('./')
-var xyzMesh = require('./lib/xyz-mesh-to-lonlat.js')
-var icosphere = require('icosphere')
-var grid = xyzMesh(icosphere(0))
+var clipGeometry = getGeometry(argv[mode])
 var clipStream = through(function (buf, enc, next) {
-  next(null, clip.divide(buf, grid))
+  next(null, clip(mode, buf, clipGeometry))
 })
 pump(instream, ifstream, clipStream, ofstream, outstream)
+
+function getGeometry(arg) {
+  var geometry = null, m
+  if (m = /^icosphere:(\d+)?$/.exec(arg)) {
+    var xyzMesh = require('./lib/xyz-mesh-to-lonlat.js')
+    var icosphere = require('icosphere')
+    geometry = xyzMesh(icosphere(Number(m[1])))
+  } else if (arg !== undefined) {
+    var toCoords = require('./lib/to-coords.js')
+    var src = fs.readFileSync(arg, 'utf8')
+    clipGeometry = JSON.parse(src)
+    if (!Array.isArray(geometry)) {
+      geometry = toCoords(geometry)
+    }
+  }
+  return geometry
+}
+
+function exit(msg) {
+  console.error(msg)
+  process.exit(1)
+}
