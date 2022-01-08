@@ -60,7 +60,8 @@ All `opts` are passed to [pclip][]. Consult [pclip][] documentation for more inf
 # install
 
 ```
-npm install georender-clip
+npm install georender-clip     # for the library
+npm install -g georender-clip  # for the command
 ```
 
 # license
