@@ -15,12 +15,15 @@ var argv = minimist(process.argv.slice(2), {
     of: ['out-format','outformat','outFormat'],
     i: 'infile',
     o: 'outfile',
+    h: 'help',
   },
   default: { outfile: '-' },
+  boolean: ['xy','geo'],
 })
 
-var infile = argv.infile ?? argv._[0] ?? '-'
+if (argv.help) return usage()
 
+var infile = argv.infile ?? argv._[0] ?? '-'
 var instream = infile === '-'
   ? process.stdin
   : fs.createReadStream(infile)
@@ -29,7 +32,7 @@ var outstream = argv.outfile === '-'
   : fs.createWriteStream(argv.outfile)
 
 var ifstream = null
-var ifmt = argv.inFormat || argv.format
+var ifmt = argv.inFormat ?? argv.format
 if (ifmt === 'base64' || ifmt === 'hex') {
   ifstream = pumpify(split(), through(function (buf, enc, next) {
     next(null, Buffer.from(buf.toString(), ifmt))
@@ -40,7 +43,7 @@ if (ifmt === 'base64' || ifmt === 'hex') {
 }
 
 var ofstream = null
-var ofmt = argv.outFormat || argv.format
+var ofmt = argv.outFormat ?? argv.format
 if (ofmt === 'base64' || ofmt === 'hex') {
   ofstream = through(function (buf, enc, next) {
     next(null, buf.toString(ofmt) + '\n')
@@ -50,24 +53,30 @@ if (ofmt === 'base64' || ofmt === 'hex') {
   ofstream = lp.encode()
 }
 
-var mode
+var opts = null
+if (argv.xy) {
+  opts = Object.assign({}, require('pclip/xy'))
+} else { // geo, default
+  opts = Object.assign({}, require('pclip/geo'))
+}
+
 if (argv.union) {
-  mode = 'union'
+  opts.mode = 'union'
 } else if (argv.difference) {
-  mode = 'difference'
+  opts.mode = 'difference'
 } else if (argv.intersect) {
-  mode = 'intersect'
+  opts.mode = 'intersect'
 } else if (argv.exclude) {
-  mode = 'exclude'
+  opts.mode = 'exclude'
 } else if (argv.divide) {
-  mode = 'divide'
+  opts.mode = 'divide'
 } else {
   return exit('no clipping method provided')
 }
 var clip = require('./')
-var clipGeometry = getGeometry(argv[mode])
+var clipGeometry = getGeometry(argv[opts.mode])
 var clipStream = through(function (buf, enc, next) {
-  next(null, clip(mode, buf, clipGeometry))
+  next(null, clip(buf, clipGeometry, opts))
 })
 pump(instream, ifstream, clipStream, ofstream, outstream)
 
@@ -91,4 +100,30 @@ function getGeometry(arg) {
 function exit(msg) {
   console.error(msg)
   process.exit(1)
+}
+
+function usage() {
+  console.log(`
+    usage: georender-clip [INFILE] {OPTIONS}
+
+        -i --infile      Read georender data from INFILE.
+        -f --format      Set input and output format.
+      --if --in-format   Set input format: base64, hex, lp (default)
+      --of --out-format  Set output format: base64, hex, lp (default)
+
+      --xy   Use cartesian coordinates.
+      --geo  Use geodetic great circles in spherical coordinates. (default)
+
+      --divide GEOMETRY      Divide INFILE by GEOMETRY.
+      --intersect GEOMETRY   Intersect GEOMETRY with INFILE.
+      --union GEOMETRY       Union GEOMETRY with INFILE.
+      --difference GEOMETRY  Subtract GEOMETRY from INFILE.
+      --exclude GEOMETRY     Exclude GEOMETRY from INFILE.
+
+    GEOMETRY can be a json file of geojson or geojson coordinate arrays or
+    a grid type (below. disambiguate files from grid types with leading ./ or /
+
+      icosphere:N  build an icosphere of subdivision number N
+
+  `.trim().replace(/^ {4}/mg,'') + '\n')
 }
