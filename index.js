@@ -1,5 +1,4 @@
 var pclip = require('pclip')
-var geo = require('pclip/geo')
 var earcut = require('earcut')
 var varint = require('varint')
 var parse = require('./lib/parse.js')
@@ -7,7 +6,7 @@ var getEdges = require('./lib/get-edges.js')
 var meshToCoords = require('./lib/mesh-to-coords.js')
 var empty = Buffer.alloc(0)
 
-module.exports = function clip(mode, A, B) {
+module.exports = function clip(A, B, opts) {
   var flip = !Buffer.isBuffer(A) && Buffer.isBuffer(B)
   var buf = flip ? B : A
   if (flip) {
@@ -23,8 +22,8 @@ module.exports = function clip(mode, A, B) {
     var mesh = getEdges(area.cells, area.positions)
     var cs = meshToCoords(mesh)
     if (cs.length === 0) return empty
-    var opts = Object.assign({ get: (nodes,i) => nodes[i], }, geo)
-    var divided = pclip.divide(cs, B, opts)
+    opts = Object.assign({ get: (nodes,i) => nodes[i], }, opts)
+    var divided = pclip(cs, B, opts)
     var edges = [], positions = [], holes = []
     for (var i = 0; i < divided.length; i++) {
       for (var j = 0; j < divided[i].length; j++) {
@@ -33,13 +32,13 @@ module.exports = function clip(mode, A, B) {
         for (var k = 0; k < l; k++) {
           var n = divided[i][j][k]
           positions.push(n.point[0], n.point[1])
-          if (nn !== null && !n.intersect && !nn.intersect) {
+          if (nn !== null && (!n.intersect || !nn.intersect)) {
             var e = positions.length/2
             edges.push(e-2,e-1)
           }
           nn = n
         }
-        if (!divided[i][j][0].intersect && !n.intersect) {
+        if (!divided[i][j][0].intersect || !n.intersect) {
           var e = positions.length/2
           edges.push(e-1,e-l)
         }
@@ -92,8 +91,9 @@ function repackArea(buf, area, edges, positions, holes) {
   size += varint.encodingLength(edgeCount)
 
   var nbuf = Buffer.alloc(size)
-  var offset = 0
   buf.copy(nbuf, offset, 0, area.start)
+  nbuf[0] = 0x04
+  var offset = area.start
   varint.encode(positions.length/2, nbuf, offset)
   offset += varint.encode.bytes
   for (var i = 0; i < positions.length; i++) {
