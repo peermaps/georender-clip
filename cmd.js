@@ -89,7 +89,7 @@ function getGeometry(arg) {
   } else if (arg !== undefined) {
     var toCoords = require('./lib/to-coords.js')
     var src = fs.readFileSync(arg, 'utf8')
-    clipGeometry = JSON.parse(src)
+    geometry = JSON.parse(src)
     if (!Array.isArray(geometry)) {
       geometry = toCoords(geometry)
     }
