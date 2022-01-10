@@ -22,7 +22,7 @@ module.exports = function clip(A, B, opts) {
     var mesh = getEdges(area.cells, area.positions)
     var cs = meshToCoords(mesh)
     if (cs.length === 0) return empty
-    opts = Object.assign({ get: (nodes,i) => nodes[i], }, opts)
+    opts = Object.assign({ get: (nodes,i) => nodes[i] }, opts)
     var divided = pclip(cs, B, opts)
     var edges = [], positions = [], holes = []
     for (var i = 0; i < divided.length; i++) {
