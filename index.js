@@ -81,14 +81,16 @@ function repackArea(buf, area, edges, positions, holes) {
     if (start < 0) start = e0
     end = e1
   }
-  if (end - start === 1 || end < start) { // pair
-    size += varint.encodingLength(start*2+0)
-    size += varint.encodingLength(end)
-  } else { // window
-    size += varint.encodingLength(start*2+1)
-    size += varint.encodingLength(end-start)
+  if (edges.length > 0) {
+    if (end - start === 1 || end < start) { // pair
+      size += varint.encodingLength(start*2+0)
+      size += varint.encodingLength(end)
+    } else { // window
+      size += varint.encodingLength(start*2+1)
+      size += varint.encodingLength(end-start)
+    }
+    edgeCount++
   }
-  edgeCount++
   size += varint.encodingLength(edgeCount)
 
   var nbuf = Buffer.alloc(size)
@@ -130,16 +132,18 @@ function repackArea(buf, area, edges, positions, holes) {
     if (start < 0) start = e0
     end = e1
   }
-  if (end - start === 1 || end < start) { // pair
-    varint.encode(start*2+0, nbuf, offset)
-    offset += varint.encode.bytes
-    varint.encode(end, nbuf, offset)
-    offset += varint.encode.bytes
-  } else { // window
-    varint.encode(start*2+1, nbuf, offset)
-    offset += varint.encode.bytes
-    varint.encode(end-start, nbuf, offset)
-    offset += varint.encode.bytes
+  if (edges.length > 0) {
+    if (end - start === 1 || end < start) { // pair
+      varint.encode(start*2+0, nbuf, offset)
+      offset += varint.encode.bytes
+      varint.encode(end, nbuf, offset)
+      offset += varint.encode.bytes
+    } else { // window
+      varint.encode(start*2+1, nbuf, offset)
+      offset += varint.encode.bytes
+      varint.encode(end-start, nbuf, offset)
+      offset += varint.encode.bytes
+    }
   }
   buf.copy(nbuf, offset, area.end, buf.length)
   offset += buf.length - area.end
