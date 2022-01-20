@@ -75,8 +75,12 @@ if (argv.union) {
 }
 var clip = require('./')
 var clipGeometry = getGeometry(argv[opts.mode])
-var clipStream = through(function (buf, enc, next) {
-  next(null, clip(buf, clipGeometry, opts))
+var clipStream = through.obj(function (buf, enc, next) {
+  var buffers = clip(buf, clipGeometry, opts)
+  for (var i = 0; i < buffers.length; i++) {
+    this.push(buffers[i])
+  }
+  next()
 })
 pump(instream, ifstream, clipStream, ofstream, outstream)
 

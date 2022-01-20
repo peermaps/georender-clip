@@ -10,7 +10,7 @@
     "icosphere": "^1.0.0",
     "length-prefixed-stream": "^2.0.0",
     "minimist": "^1.2.5",
-    "pclip": "^1.4.4",
+    "pclip": "^1.5.0",
     "pump": "^3.0.0",
     "pumpify": "^2.0.1",
     "split2": "^4.1.0",

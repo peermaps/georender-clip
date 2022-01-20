@@ -4,7 +4,6 @@ var varint = require('varint')
 var parse = require('./lib/parse.js')
 var getEdges = require('./lib/get-edges.js')
 var meshToCoords = require('./lib/mesh-to-coords.js')
-var empty = Buffer.alloc(0)
 
 module.exports = function clip(A, B, opts) {
   var flip = !Buffer.isBuffer(A) && Buffer.isBuffer(B)
@@ -16,16 +15,17 @@ module.exports = function clip(A, B, opts) {
   if (buf[0] === 0x02) {
     var line = parse(buf)
     // todo: clip line
-    return empty
+    return []
   } else if (buf[0] === 0x03) {
     var area = parse(buf)
     var mesh = getEdges(area.cells, area.positions)
     var cs = meshToCoords(mesh)
-    if (cs.length === 0) return empty
+    if (cs.length === 0) return []
     opts = Object.assign({ get: (nodes,i) => nodes[i] }, opts)
     var divided = pclip(cs, B, opts)
-    var edges = [], positions = [], holes = []
+    var out = []
     for (var i = 0; i < divided.length; i++) {
+      var edges = [], positions = [], holes = []
       for (var j = 0; j < divided[i].length; j++) {
         var l = divided[i][j].length
         var nn = null
@@ -44,11 +44,12 @@ module.exports = function clip(A, B, opts) {
         }
         if (j+1 !== divided[i].length) holes.push(positions.length/2)
       }
+      out.push(repackArea(buf, area, edges, positions, holes))
     }
-    return repackArea(buf, area, edges, positions, holes)
+    return out
   } else if (buf[0] === 0x04) {
     // todo
-    return empty
+    return []
   }
 }
 
