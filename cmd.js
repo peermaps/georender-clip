@@ -70,6 +70,8 @@ if (argv.union) {
   opts.mode = 'exclude'
 } else if (argv.divide) {
   opts.mode = 'divide'
+} else if (argv.cut) {
+  opts.mode = 'cut'
 } else if (argv.geometry) {
   var g = getGeometry(argv.geometry)
   return console.log(JSON.stringify(g))

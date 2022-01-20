@@ -4,6 +4,7 @@ var varint = require('varint')
 var parse = require('./lib/parse.js')
 var getEdges = require('./lib/get-edges.js')
 var meshToCoords = require('./lib/mesh-to-coords.js')
+var wrapClip = require('./lib/wrap-clip.js')
 
 module.exports = function clip(A, B, opts) {
   var flip = !Buffer.isBuffer(A) && Buffer.isBuffer(B)
@@ -22,7 +23,7 @@ module.exports = function clip(A, B, opts) {
     var cs = meshToCoords(mesh)
     if (cs.length === 0) return []
     opts = Object.assign({ get: (nodes,i) => nodes[i] }, opts)
-    var clipped = pclip(cs, B, opts)
+    var clipped = wrapClip(pclip, cs, B, opts)
     var out = []
     for (var i = 0; i < clipped.length; i++) {
       var edges = [], positions = [], holes = []
