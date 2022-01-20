@@ -70,6 +70,9 @@ if (argv.union) {
   opts.mode = 'exclude'
 } else if (argv.divide) {
   opts.mode = 'divide'
+} else if (argv.geometry) {
+  var g = getGeometry(argv.geometry)
+  return console.log(JSON.stringify(g))
 } else {
   return exit('no clipping method provided')
 }
@@ -128,6 +131,8 @@ function usage() {
     a grid type (below. disambiguate files from grid types with leading ./ or /
 
       icosphere:N  build an icosphere of subdivision number N
+
+    Use --geometry GEOMETRY to print GEOMETRY and perform no clipping.
 
   `.trim().replace(/^ {4}/mg,'') + '\n')
 }
