@@ -22,15 +22,15 @@ module.exports = function clip(A, B, opts) {
     var cs = meshToCoords(mesh)
     if (cs.length === 0) return []
     opts = Object.assign({ get: (nodes,i) => nodes[i] }, opts)
-    var divided = pclip(cs, B, opts)
+    var clipped = pclip(cs, B, opts)
     var out = []
-    for (var i = 0; i < divided.length; i++) {
+    for (var i = 0; i < clipped.length; i++) {
       var edges = [], positions = [], holes = []
-      for (var j = 0; j < divided[i].length; j++) {
-        var l = divided[i][j].length
+      for (var j = 0; j < clipped[i].length; j++) {
+        var l = clipped[i][j].length
         var nn = null
         for (var k = 0; k < l; k++) {
-          var n = divided[i][j][k]
+          var n = clipped[i][j][k]
           positions.push(n.point[0], n.point[1])
           if (nn !== null && (!n.intersect || !nn.intersect)) {
             var e = positions.length/2
@@ -38,11 +38,11 @@ module.exports = function clip(A, B, opts) {
           }
           nn = n
         }
-        if (!divided[i][j][0].intersect || !n.intersect) {
+        if (!clipped[i][j][0].intersect || !n.intersect) {
           var e = positions.length/2
           edges.push(e-1,e-l)
         }
-        if (j+1 !== divided[i].length) holes.push(positions.length/2)
+        if (j+1 !== clipped[i].length) holes.push(positions.length/2)
       }
       out.push(repackArea(buf, area, edges, positions, holes))
     }
