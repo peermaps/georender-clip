@@ -4,7 +4,8 @@ var varint = require('varint')
 var parse = require('./lib/parse.js')
 var getEdges = require('./lib/get-edges.js')
 var meshToCoords = require('./lib/mesh-to-coords.js')
-var wrapClip = require('./lib/wrap-clip.js')
+var fix = require('./lib/fix.js')
+var slowDivide = require('./lib/slow-divide.js')
 
 module.exports = function clip(A, B, opts) {
   var flip = !Buffer.isBuffer(A) && Buffer.isBuffer(B)
@@ -20,10 +21,11 @@ module.exports = function clip(A, B, opts) {
   } else if (buf[0] === 0x03) {
     var area = parse(buf)
     var mesh = getEdges(area.cells, area.positions)
+    fix(mesh)
     var cs = meshToCoords(mesh)
     if (cs.length === 0) return []
     opts = Object.assign({ get: (nodes,i) => nodes[i] }, opts)
-    var clipped = wrapClip(pclip, cs, B, opts)
+    var clipped = opts.mode === 'divide' ? slowDivide(cs, B, opts) : pclip(cs, B, opts)
     var out = []
     for (var i = 0; i < clipped.length; i++) {
       var edges = [], positions = [], holes = []
