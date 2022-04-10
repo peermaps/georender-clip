@@ -155,3 +155,34 @@ function repackArea(buf, area, edges, positions, holes) {
   }
   return nbuf
 }
+
+function toPoints(g) {
+  for (var d = 0, x = g; Array.isArray(x); x = x[0]) d++;
+  var result = []
+  if (d === 1) {
+    for (var i = 0; i < g.length; i++) {
+      result.push(g[i].point)
+    }
+  } else if (d === 2) {
+    for (var i = 0; i < g.length; i++) {
+      var ring = []
+      for (var j = 0; j < g[i].length; j++) {
+        ring.push(g[i][j].point)
+      }
+      result.push(ring)
+    }
+  } else if (d === 3) {
+    for (var i = 0; i < g.length; i++) {
+      var rings = []
+      for (var j = 0; j < g[i].length; j++) {
+        var ring = []
+        for (var k = 0; k < g[i][j].length; k++) {
+          ring.push(g[i][j][k].point)
+        }
+        rings.push(ring)
+      }
+      result.push(rings)
+    }
+  }
+  return result
+}
