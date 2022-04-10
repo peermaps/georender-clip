@@ -22,6 +22,7 @@ usage: georender-clip [INFILE] {OPTIONS}
   --union GEOMETRY       Union GEOMETRY with INFILE.
   --difference GEOMETRY  Subtract GEOMETRY from INFILE.
   --exclude GEOMETRY     Exclude GEOMETRY from INFILE.
+  --show GEOMETRY        Print GEOMETRY instead of clipping.
 
 GEOMETRY can be a json file of geojson or geojson coordinate arrays or
 a grid type (below. disambiguate files from grid types with leading ./ or /

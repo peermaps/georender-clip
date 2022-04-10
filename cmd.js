@@ -60,21 +60,24 @@ if (argv.xy) {
   opts = Object.assign({}, require('pclip/geo'))
 }
 
-if (argv.union) {
+if (argv.union !== undefined) {
   opts.mode = 'union'
-} else if (argv.difference) {
+} else if (argv.difference !== undefined) {
   opts.mode = 'difference'
-} else if (argv.intersect) {
+} else if (argv.intersect !== undefined) {
   opts.mode = 'intersect'
-} else if (argv.exclude) {
+} else if (argv.exclude !== undefined) {
   opts.mode = 'exclude'
-} else if (argv.divide) {
+} else if (argv.divide !== undefined) {
   opts.mode = 'divide'
+} else if (argv.show !== undefined) {
+  opts.mode = 'show'
 } else {
   return exit('no clipping method provided')
 }
 var clip = require('./')
 var clipGeometry = getGeometry(argv[opts.mode])
+if (argv.show !== undefined) return console.log(JSON.stringify(clipGeometry))
 var clipStream = through(function (buf, enc, next) {
   next(null, clip(buf, clipGeometry, opts))
 })
@@ -119,6 +122,7 @@ function usage() {
       --union GEOMETRY       Union GEOMETRY with INFILE.
       --difference GEOMETRY  Subtract GEOMETRY from INFILE.
       --exclude GEOMETRY     Exclude GEOMETRY from INFILE.
+      --show GEOMETRY        Print GEOMETRY instead of clipping.
 
     GEOMETRY can be a json file of geojson or geojson coordinate arrays or
     a grid type (below. disambiguate files from grid types with leading ./ or /
