@@ -4,7 +4,8 @@ var varint = require('varint')
 var parse = require('./lib/parse.js')
 var getEdges = require('./lib/get-edges.js')
 var meshToCoords = require('./lib/mesh-to-coords.js')
-var empty = Buffer.alloc(0)
+var fix = require('./lib/fix.js')
+var slowDivide = require('./lib/slow-divide.js')
 
 module.exports = function clip(A, B, opts) {
   var flip = !Buffer.isBuffer(A) && Buffer.isBuffer(B)
@@ -16,21 +17,23 @@ module.exports = function clip(A, B, opts) {
   if (buf[0] === 0x02) {
     var line = parse(buf)
     // todo: clip line
-    return empty
+    return []
   } else if (buf[0] === 0x03) {
     var area = parse(buf)
     var mesh = getEdges(area.cells, area.positions)
+    fix(mesh)
     var cs = meshToCoords(mesh)
-    if (cs.length === 0) return empty
+    if (cs.length === 0) return []
     opts = Object.assign({ get: (nodes,i) => nodes[i] }, opts)
-    var divided = pclip(cs, B, opts)
-    var edges = [], positions = [], holes = []
-    for (var i = 0; i < divided.length; i++) {
-      for (var j = 0; j < divided[i].length; j++) {
-        var l = divided[i][j].length
+    var clipped = opts.mode === 'divide' ? slowDivide(cs, B, opts) : pclip(cs, B, opts)
+    var out = []
+    for (var i = 0; i < clipped.length; i++) {
+      var edges = [], positions = [], holes = []
+      for (var j = 0; j < clipped[i].length; j++) {
+        var l = clipped[i][j].length
         var nn = null
         for (var k = 0; k < l; k++) {
-          var n = divided[i][j][k]
+          var n = clipped[i][j][k]
           positions.push(n.point[0], n.point[1])
           if (nn !== null && (!n.intersect || !nn.intersect)) {
             var e = positions.length/2
@@ -38,17 +41,18 @@ module.exports = function clip(A, B, opts) {
           }
           nn = n
         }
-        if (!divided[i][j][0].intersect || !n.intersect) {
+        if (!clipped[i][j][0].intersect || !n.intersect) {
           var e = positions.length/2
           edges.push(e-1,e-l)
         }
-        if (j+1 !== divided[i].length) holes.push(positions.length/2)
+        if (j+1 !== clipped[i].length) holes.push(positions.length/2)
       }
+      out.push(repackArea(buf, area, edges, positions, holes))
     }
-    return repackArea(buf, area, edges, positions, holes)
+    return out
   } else if (buf[0] === 0x04) {
     // todo
-    return empty
+    return []
   }
 }
 
@@ -80,14 +84,16 @@ function repackArea(buf, area, edges, positions, holes) {
     if (start < 0) start = e0
     end = e1
   }
-  if (end - start === 1 || end < start) { // pair
-    size += varint.encodingLength(start*2+0)
-    size += varint.encodingLength(end)
-  } else { // window
-    size += varint.encodingLength(start*2+1)
-    size += varint.encodingLength(end-start)
+  if (edges.length > 0) {
+    if (end - start === 1 || end < start) { // pair
+      size += varint.encodingLength(start*2+0)
+      size += varint.encodingLength(end)
+    } else { // window
+      size += varint.encodingLength(start*2+1)
+      size += varint.encodingLength(end-start)
+    }
+    edgeCount++
   }
-  edgeCount++
   size += varint.encodingLength(edgeCount)
 
   var nbuf = Buffer.alloc(size)
@@ -129,16 +135,18 @@ function repackArea(buf, area, edges, positions, holes) {
     if (start < 0) start = e0
     end = e1
   }
-  if (end - start === 1 || end < start) { // pair
-    varint.encode(start*2+0, nbuf, offset)
-    offset += varint.encode.bytes
-    varint.encode(end, nbuf, offset)
-    offset += varint.encode.bytes
-  } else { // window
-    varint.encode(start*2+1, nbuf, offset)
-    offset += varint.encode.bytes
-    varint.encode(end-start, nbuf, offset)
-    offset += varint.encode.bytes
+  if (edges.length > 0) {
+    if (end - start === 1 || end < start) { // pair
+      varint.encode(start*2+0, nbuf, offset)
+      offset += varint.encode.bytes
+      varint.encode(end, nbuf, offset)
+      offset += varint.encode.bytes
+    } else { // window
+      varint.encode(start*2+1, nbuf, offset)
+      offset += varint.encode.bytes
+      varint.encode(end-start, nbuf, offset)
+      offset += varint.encode.bytes
+    }
   }
   buf.copy(nbuf, offset, area.end, buf.length)
   offset += buf.length - area.end
@@ -146,4 +154,35 @@ function repackArea(buf, area, edges, positions, holes) {
     throw new Error(`repacked area buffer length (${nbuf.length}) does not match offset (${offset})`)
   }
   return nbuf
+}
+
+function toPoints(g) {
+  for (var d = 0, x = g; Array.isArray(x); x = x[0]) d++;
+  var result = []
+  if (d === 1) {
+    for (var i = 0; i < g.length; i++) {
+      result.push(g[i].point)
+    }
+  } else if (d === 2) {
+    for (var i = 0; i < g.length; i++) {
+      var ring = []
+      for (var j = 0; j < g[i].length; j++) {
+        ring.push(g[i][j].point)
+      }
+      result.push(ring)
+    }
+  } else if (d === 3) {
+    for (var i = 0; i < g.length; i++) {
+      var rings = []
+      for (var j = 0; j < g[i].length; j++) {
+        var ring = []
+        for (var k = 0; k < g[i][j].length; k++) {
+          ring.push(g[i][j][k].point)
+        }
+        rings.push(ring)
+      }
+      result.push(rings)
+    }
+  }
+  return result
 }

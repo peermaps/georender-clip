@@ -70,6 +70,8 @@ if (argv.union !== undefined) {
   opts.mode = 'exclude'
 } else if (argv.divide !== undefined) {
   opts.mode = 'divide'
+} else if (argv.cut) {
+  opts.mode = 'cut'
 } else if (argv.show !== undefined) {
   opts.mode = 'show'
 } else {
@@ -78,8 +80,12 @@ if (argv.union !== undefined) {
 var clip = require('./')
 var clipGeometry = getGeometry(argv[opts.mode])
 if (argv.show !== undefined) return console.log(JSON.stringify(clipGeometry))
-var clipStream = through(function (buf, enc, next) {
-  next(null, clip(buf, clipGeometry, opts))
+var clipStream = through.obj(function (buf, enc, next) {
+  var buffers = clip(buf, clipGeometry, opts)
+  for (var i = 0; i < buffers.length; i++) {
+    this.push(buffers[i])
+  }
+  next()
 })
 pump(instream, ifstream, clipStream, ofstream, outstream)
 
@@ -128,6 +134,8 @@ function usage() {
     a grid type (below. disambiguate files from grid types with leading ./ or /
 
       icosphere:N  build an icosphere of subdivision number N
+
+    Use --geometry GEOMETRY to print GEOMETRY and perform no clipping.
 
   `.trim().replace(/^ {4}/mg,'') + '\n')
 }
