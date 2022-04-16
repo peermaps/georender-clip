@@ -1,4 +1,5 @@
-var pclip = require('pclip')
+//var pclip = require('pclip')
+var pclip = require('./lib/algorithms.js').polygonClipping
 var earcut = require('earcut')
 var varint = require('varint')
 var parse = require('./lib/parse.js')
@@ -26,6 +27,7 @@ module.exports = function clip(A, B, opts) {
     if (cs.length === 0) return []
     opts = Object.assign({ get: (nodes,i) => nodes[i] }, opts)
     var clipped = opts.mode === 'divide' ? slowDivide(cs, B, opts) : pclip(cs, B, opts)
+    //var clipped = pclip(cs, B, opts)
     var out = []
     for (var i = 0; i < clipped.length; i++) {
       var edges = [], positions = [], holes = []
@@ -34,11 +36,16 @@ module.exports = function clip(A, B, opts) {
         var nn = null
         for (var k = 0; k < l; k++) {
           var n = clipped[i][j][k]
+          /*
           positions.push(n.point[0], n.point[1])
           if (nn !== null && (!n.intersect || !nn.intersect)) {
             var e = positions.length/2
             edges.push(e-2,e-1)
           }
+          */
+          positions.push(n[0], n[1])
+          var e = positions.length/2
+          edges.push(e-2,e-1)
           nn = n
         }
         if (!clipped[i][j][0].intersect || !n.intersect) {
