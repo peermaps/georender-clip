@@ -7,7 +7,11 @@ var edgePack = require('./lib/edge.js')
 var getEdges = require('./lib/get-edges.js')
 var meshToCoords = require('./lib/mesh-to-coords.js')
 var fix = require('./lib/fix.js')
+var removeGrid = require('./lib/remove-grid.js')
 var slowDivide = require('./lib/slow-divide.js')
+var vec2 = require('gl-vec2')
+var v0 = [0,0], v1 = [0,0]
+var epsilon = 1e-8
 
 module.exports = function clip(A, B, opts) {
   var flip = !Buffer.isBuffer(A) && Buffer.isBuffer(B)
@@ -34,17 +38,26 @@ module.exports = function clip(A, B, opts) {
       var edges = [], positions = [], holes = []
       for (var j = 0; j < clipped[i].length; j++) {
         var l = clipped[i][j].length
-        var nn = null
         var estart = positions.length/2
         var es = []
         for (var k = 0; k < l; k++) {
           var n = clipped[i][j][k]
-          es.push(positions.length/2)
+          if (k+1 === l) {
+            vec2.set(v0, positions[0], positions[1])
+            if (!(vec2.distance(v0,n) < epsilon)) {
+              es.push(positions.length/2)
+            }
+          } else {
+            es.push(positions.length/2)
+          }
           positions.push(n[0], n[1])
-          nn = n
         }
-        es.push(estart/2)
-        edges.push(es)
+        if (es[es.length-1] !== es[0]) es.push(estart/2)
+        if (opts.mode === 'divide') {
+          edges = edges.concat(removeGrid(positions, es, B))
+        } else {
+          edges.push(es)
+        }
         if (j+1 !== clipped[i].length) holes.push(positions.length/2)
       }
       out.push(repackArea(buf, area, edges, positions, holes))
