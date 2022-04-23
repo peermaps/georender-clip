@@ -1,9 +1,8 @@
 var pclip = require('./lib/algorithms.js').polygonClipping
 var repackArea = require('./lib/repack-area.js')
-var earcut = require('earcut')
-var varint = require('varint')
+var repackLine = require('./lib/repack-line.js')
+var clipLine = require('./lib/clip-line.js')
 var parse = require('./lib/parse.js')
-var edgePack = require('./lib/edge.js')
 var getEdges = require('./lib/get-edges.js')
 var meshToCoords = require('./lib/mesh-to-coords.js')
 var fix = require('./lib/fix.js')
@@ -22,9 +21,12 @@ module.exports = function clip(A, B, opts) {
   if (buf[0] === 0x01) return buf
   if (buf[0] === 0x02) {
     var line = parse(buf)
-    console.error('todo clip line', line)
-    // todo: clip line
-    return []
+    var lines = clipLine(line.positions, B)
+    var out = []
+    for (var i = 0; i < lines.length; i++) {
+      out.push(repackLine(buf, line, lines[i]))
+    }
+    return out
   } else if (buf[0] === 0x03) {
     var area = parse(buf)
     var mesh = getEdges(area.cells, area.positions)
