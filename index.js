@@ -41,6 +41,7 @@ module.exports = function clip(A, B, opts) {
       var edges = [], positions = [], holes = []
       for (var j = 0; j < clipped[i].length; j++) {
         var l = clipped[i][j].length
+        if (vec2.distance(clipped[i][j][0],clipped[i][j][l-1]) < epsilon) l--
         var estart = positions.length/2
         var es = []
         for (var k = 0; k < l; k++) {
