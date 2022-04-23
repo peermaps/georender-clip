@@ -18,7 +18,6 @@ var argv = minimist(process.argv.slice(2), {
     h: 'help',
   },
   default: { outfile: '-' },
-  boolean: ['xy','geo'],
 })
 
 if (argv.help) return usage()
@@ -53,13 +52,7 @@ if (ofmt === 'base64' || ofmt === 'hex') {
   ofstream = lp.encode()
 }
 
-var opts = null
-if (argv.xy) {
-  opts = Object.assign({}, require('pclip/xy'))
-} else { // geo, default
-  opts = Object.assign({}, require('pclip/geo'))
-}
-
+var opts = {}
 if (argv.union !== undefined) {
   opts.mode = 'union'
 } else if (argv.difference !== undefined) {
@@ -119,9 +112,6 @@ function usage() {
         -f --format      Set input and output format.
       --if --in-format   Set input format: base64, hex, lp (default)
       --of --out-format  Set output format: base64, hex, lp (default)
-
-      --xy   Use cartesian coordinates.
-      --geo  Use geodetic great circles in spherical coordinates. (default)
 
       --divide GEOMETRY      Divide INFILE by GEOMETRY.
       --intersect GEOMETRY   Intersect GEOMETRY with INFILE.

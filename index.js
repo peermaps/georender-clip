@@ -1,4 +1,3 @@
-//var pclip = require('pclip')
 var pclip = require('./lib/algorithms.js').polygonClipping
 var earcut = require('earcut')
 var varint = require('varint')
