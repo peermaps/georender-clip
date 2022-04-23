@@ -21,7 +21,7 @@ module.exports = function clip(A, B, opts) {
   if (buf[0] === 0x01) return buf
   if (buf[0] === 0x02) {
     var line = parse(buf)
-    var lines = clipLine(line.positions, B)
+    var lines = clipLine(line.positions, B, opts)
     var out = []
     for (var i = 0; i < lines.length; i++) {
       out.push(repackLine(buf, line, lines[i]))
