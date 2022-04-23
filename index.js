@@ -10,9 +10,9 @@ var removeGrid = require('./lib/remove-grid.js')
 var slowDivide = require('./lib/slow-divide.js')
 var vec2 = require('gl-vec2')
 var v0 = [0,0], v1 = [0,0]
-var epsilon = 1e-8
 
 module.exports = function clip(A, B, opts) {
+  var epsilon = opts.epsilon || 1e-8
   var flip = !Buffer.isBuffer(A) && Buffer.isBuffer(B)
   var buf = flip ? B : A
   if (flip) {
@@ -57,7 +57,7 @@ module.exports = function clip(A, B, opts) {
         }
         if (es[es.length-1] !== es[0]) es.push(estart/2)
         if (opts.mode === 'divide') {
-          edges = edges.concat(removeGrid(positions, es, B))
+          edges = edges.concat(removeGrid(positions, es, B, epsilon))
         } else {
           edges.push(es)
         }
