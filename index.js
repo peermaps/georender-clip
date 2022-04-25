@@ -18,7 +18,7 @@ module.exports = function clip(A, B, opts) {
   if (flip) {
     B = A
   }
-  if (buf[0] === 0x01) return buf
+  if (buf[0] === 0x01) return [buf]
   if (buf[0] === 0x02) {
     var line = parse(buf)
     var lines = clipLine(line.positions, B, opts)
@@ -56,7 +56,7 @@ module.exports = function clip(A, B, opts) {
           }
           positions.push(n[0], n[1])
         }
-        if (es[es.length-1] !== es[0]) es.push(estart/2)
+        if (es[es.length-1] !== es[0]) es.push(es[0])
         if (opts.mode === 'divide') {
           edges = edges.concat(removeGrid(positions, es, B, epsilon))
         } else {
