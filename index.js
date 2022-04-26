@@ -3,11 +3,10 @@ var repackArea = require('./lib/repack-area.js')
 var repackLine = require('./lib/repack-line.js')
 var clipLine = require('./lib/clip-line.js')
 var parse = require('./lib/parse.js')
-var getEdges = require('./lib/get-edges.js')
-var meshToCoords = require('./lib/mesh-to-coords.js')
 var fix = require('./lib/fix.js')
 var removeGrid = require('./lib/remove-grid.js')
 var slowDivide = require('./lib/slow-divide.js')
+var georenderToGeojson = require('georender-geojson/to-geojson')
 var vec2 = require('gl-vec2')
 var v0 = [0,0], v1 = [0,0]
 
@@ -29,17 +28,15 @@ module.exports = function clip(A, B, opts) {
     return out
   } else if (buf[0] === 0x03) {
     var area = parse(buf)
-    var mesh = getEdges(area.cells, area.positions)
-    fix(mesh)
-    var cs = meshToCoords(mesh)
+    var cs = georenderToGeojson(buf).features[0].geometry.coordinates
     if (cs.length === 0) return []
     opts = Object.assign({ get: (nodes,i) => nodes[i] }, opts)
     var clipped = opts.mode === 'divide' ? slowDivide(cs, B, opts) : pclip(cs, B, opts)
-    //var clipped = pclip(cs, B, opts)
     var out = []
     for (var i = 0; i < clipped.length; i++) {
       var edges = [], positions = [], holes = []
       for (var j = 0; j < clipped[i].length; j++) {
+        if (j > 0) holes.push(positions.length/2)
         var l = clipped[i][j].length
         if (vec2.distance(clipped[i][j][0],clipped[i][j][l-1]) < epsilon) l--
         var estart = positions.length/2
@@ -62,7 +59,6 @@ module.exports = function clip(A, B, opts) {
         } else {
           edges.push(es)
         }
-        if (j+1 !== clipped[i].length) holes.push(positions.length/2)
       }
       out.push(repackArea(buf, area, edges, positions, holes))
     }
